@@ -33,12 +33,13 @@ def signal_handler(sig, frame):
     sys.exit(128 + sig)
 
 class Ui_Dialog(object):
-    def setupUi(self, Dialog, args):
+    def setupUi(self, Dialog, args, in_sysmaint_mode):
         self.Dialog = Dialog
         self.title = args.title
         self.msg = args.message
         self.icon = args.icon
         self.pos = args.position
+        self.in_sysmaint_mode = in_sysmaint_mode
 
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHeightForWidth(Dialog.sizePolicy().hasHeightForWidth())
@@ -77,7 +78,11 @@ class Ui_Dialog(object):
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Base, brush)
         self.Message.setPalette(palette)
         self.Message.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse | QtCore.Qt.TextSelectableByMouse)
-        self.Message.setOpenExternalLinks(True)
+        if in_sysmaint_mode:
+            self.Message.setOpenLinks(False)
+            self.Message.setOpenExternalLinks(False)
+        else:
+            self.Message.setOpenExternalLinks(True)
         self.Message.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.gridLayout.addWidget(self.Message, 0, 1, 1, 2)
 
@@ -138,8 +143,12 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     Dialog = QtWidgets.QDialog()
 
+    with open("/proc/cmdline", "r") as kernel_cmdline_file:
+        kernel_cmdline = kernel_cmdline_file.read()
+    in_sysmaint_mode = "boot-role=sysmaint" in kernel_cmdline
+
     ui = Ui_Dialog()
-    ui.setupUi(Dialog, args)
+    ui.setupUi(Dialog, args, in_sysmaint_mode)
     Dialog.show()
 
     signal.signal(signal.SIGINT, signal_handler)

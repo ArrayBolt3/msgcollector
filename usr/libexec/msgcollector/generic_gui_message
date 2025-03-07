@@ -38,9 +38,10 @@ def signal_handler(sig, frame):
     sys.exit(128 + sig)
 
 class GuiMessage(QtWidgets.QDialog):
-    def __init__(self, args):
+    def __init__(self, args, in_sysmaint_mode):
         super(GuiMessage, self).__init__()
         self.args = args
+        self.in_sysmaint_mode = in_sysmaint_mode
         self.setup_ui()
 
     def setup_ui(self):
@@ -94,7 +95,11 @@ class GuiMessage(QtWidgets.QDialog):
         self.text.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
         self.text.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.text.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse | QtCore.Qt.TextSelectableByMouse)
-        self.text.setOpenExternalLinks(True)
+        if self.in_sysmaint_mode:
+            self.text.setOpenLinks(False)
+            self.text.setOpenExternalLinks(False)
+        else:
+            self.text.setOpenExternalLinks(True)
         self.text.setText(message)
         self.gridLayout.addWidget(self.text, 0, 1)
 
@@ -167,7 +172,11 @@ def main():
     timer.start(500)
     timer.timeout.connect(lambda: None)
 
-    message = GuiMessage(args)
+    with open("/proc/cmdline", "r") as kernel_cmdline_file:
+        kernel_cmdline = kernel_cmdline_file.read()
+    in_sysmaint_mode = "boot-role=sysmaint" in kernel_cmdline
+
+    message = GuiMessage(args, in_sysmaint_mode)
     message.show()
     app.exec_()
 
