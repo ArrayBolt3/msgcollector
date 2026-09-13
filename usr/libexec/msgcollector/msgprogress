@@ -112,13 +112,8 @@ parse_cmd_options() {
 }
 
 safe_file_write() {
-  ## For extra security against freezing while trying to write to a non-existing pipe, let's use timeout.
-  ## Use printf with positional args to avoid shell injection.
-  ## The redirection runs INSIDE the timeout'd bash, not in this shell: writing
-  ## to a reader-less FIFO blocks in open() before the command starts, so a
-  ## redirect here would freeze BEFORE timeout could act -- the very freeze this
-  ## guard exists to prevent. Single quotes are deliberate: the code is literal,
-  ## $1/$2 reach the inner bash as ARGUMENTS.
+  ## For extra security against freezing while trying to write to a
+  ## non-existing pipe, let's use timeout.
   # shellcheck disable=SC2016
   timeout --kill-after=1 1 /bin/bash -c 'printf "%s\n" "$1" > "$2"' -- "$1" "$2"
 }
@@ -171,14 +166,14 @@ progress_bar() {
    return 0
 }
 
-# shellcheck source=./usr/libexec/msgcollector/msgcollector_shared
-source "${MSGCOLLECTOR_REPO:-}/usr/libexec/msgcollector/msgcollector_shared"
+# shellcheck source=./msgcollector_shared
+source "${MSGCOLLECTOR_PATH:-}/usr/libexec/msgcollector/msgcollector_shared"
 ## sets: ${msgcollector_run_dir}
 folder_init
 
 ## provides: msgcollector_check, is_whole_number
-# shellcheck source=./usr/libexec/msgcollector/check
-source "${MSGCOLLECTOR_REPO:-}/usr/libexec/msgcollector/check"
+# shellcheck source=./check
+source "${MSGCOLLECTOR_PATH:-}/usr/libexec/msgcollector/check"
 
 parse_cmd_options "$@"
 
