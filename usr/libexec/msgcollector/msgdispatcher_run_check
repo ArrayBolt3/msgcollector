@@ -32,12 +32,12 @@ msgdispatcher_pid_check() {
 }
 
 msgdispatcher_run_check() {
-   # shellcheck source=./usr/libexec/msgcollector/msgcollector_shared
-   source "${MSGCOLLECTOR_REPO:-}/usr/libexec/msgcollector/msgcollector_shared"
+   # shellcheck source=./msgcollector_shared
+   source "${MSGCOLLECTOR_PATH:-}/usr/libexec/msgcollector/msgcollector_shared"
    ## sets: ${msgcollector_run_dir}
    folder_init
 
-   ## systemcheck sets GUI / CLI variables (external entrypoint globals).
+   ## systemcheck sets GUI / CLI variables.
    # shellcheck disable=SC2154
    if [ "${GUI}" = "true" ]; then
       if msgdispatcher_pid_check "gui" ; then
@@ -68,9 +68,8 @@ msgdispatcher_init() {
    #arg_max_bytes=138300
    arg_max_bytes=32768
 
-   output_tool="${MSGCOLLECTOR_REPO:-}/usr/libexec/msgcollector/msgcollector"
-   ## Dispatch function NAMES, invoked via '$output_x' from error_handler (a
-   ## separate file); shellcheck cannot see that cross-file indirection.
+   output_tool="${MSGCOLLECTOR_PATH:-}/usr/libexec/msgcollector/msgcollector"
+   ## Dispatch function names, invoked via '$output_x' from error_handler.
    # shellcheck disable=SC2034
    output_general="output_func_general"
    # shellcheck disable=SC2034
@@ -113,10 +112,10 @@ output_func_cli() {
    output_func --onlyecho "$@"
 }
 
-## output_func_verbose / IDENTIFIER are set by the calling entrypoint (systemcheck).
+## Sourcing scripts are expected to set IDENTIFIER.
 # shellcheck disable=SC2154
 output_func_core() {
-   if [ "${output_func_verbose}" = "true" ]; then
+   if [ "${output_func_verbose:-}" = "true" ]; then
       printf '%s\n' "Running: bash -x ${output_tool} --identifier ${IDENTIFIER} ${1+$@}"
       bash -x "${output_tool}" --identifier "${IDENTIFIER}" "$@"
    else

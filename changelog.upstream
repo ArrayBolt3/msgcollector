@@ -1,3 +1,223 @@
+commit 09f8e5a34df37b6a10ac9ec1f9d534ced3391745
+Merge: 03c0a85 29af975
+Author: Patrick Schleizer <adrelanos@whonix.org>
+Date:   Sun Sep 13 09:42:36 2026 -0400
+
+    Merge remote-tracking branch 'refs/remotes/ArrayBolt3/arraybolt3/trixie'
+
+commit 29af9751f3d19864d1e1e27cea375c4410328527
+Author: Aaron Rainbolt <arraybolt3@gmail.com>
+Date:   Sun Sep 13 00:37:08 2026 -0400
+
+    Polish, remove obsolete profile.d integration
+
+commit 21c2517cb1243d0de212b1a9809e38e0c0f097c0
+Merge: 03c0a85 f207e4d
+Author: Aaron Rainbolt <arraybolt3@gmail.com>
+Date:   Sat Sep 12 23:27:07 2026 -0400
+
+    Merge branch 'ai' into arraybolt3/trixie
+
+commit f207e4d616923d040f2a40934f1c748d2941bdfa
+Author: claude (dev534 1e2c41f1-4191-46ad-8a1a-8ac04910f049) <noreply@anthropic.com>
+Date:   Sat Sep 12 07:47:23 2026 -0400
+
+    make the whole repo shellcheck-clean + style-compliant
+
+    - error_handler: no-strict waiver (sourced fragment), brace all vars, echo->printf (R-034), command -v -> declare -F for function checks (R-090), function-level SC2154/SC2034 disable for the caller-provided interface globals
+
+    - pv_wrapper: add LC_ALL=C (R-010); inline SC2154 for the caller-set eval'd command vars
+
+    - msgdispatcher_profile_d: strict-mode block; msgdispatcher_xdg_autostart + ci/*.sh: add LC_ALL=C (R-010)
+
+    - br_add.py: hardened '#!/usr/bin/python3 -Bsu' shebang
+
+    - profile.d/40_msgdispatcher.sh + bash.bash_logout.anondist: no-strict waiver, brace vars, drop unreachable post-return 'exit 0' (SC2317)
+
+commit b959dee420fda5406983d9c104d9d1818d0b10de
+Author: claude (dev534 1e2c41f1-4191-46ad-8a1a-8ac04910f049) <noreply@anthropic.com>
+Date:   Sat Sep 12 06:29:14 2026 -0400
+
+    add per-line shellcheck source= directives + disables
+
+    - source= directive on every helper-scripts / same-repo source line, so shellcheck -x follows them (resolves SC1090/SC1091 and the sourced-var SC2154 by seeing the real definitions)
+
+    - targeted inline SC2154/SC2034 disables in msgdispatcher_run_check: GUI/CLI/IDENTIFIER/output_func_verbose are set by the calling entrypoint (systemcheck); output_general/x/cli are dispatched by name from error_handler
+
+    - completes dropping the repo-wide .shellcheckrc
+
+commit a1365e271ca4666241e3b77586187da9bb572844
+Author: claude (dev534 1e2c41f1-4191-46ad-8a1a-8ac04910f049) <noreply@anthropic.com>
+Date:   Sat Sep 12 06:21:00 2026 -0400
+
+    drop .shellcheckrc; rely on per-line shellcheck directives
+
+    - no repo-wide shellcheck config; source= directives + targeted inline disables handle each finding at its site
+
+commit 5b04ad7466bf6afdb2146322b214f27ae9760ed2
+Author: claude (dev534 1e2c41f1-4191-46ad-8a1a-8ac04910f049) <noreply@anthropic.com>
+Date:   Sat Sep 12 05:29:28 2026 -0400
+
+    msgprogress: fix safe_file_write FIFO-freeze
+
+    - '> "$2"' ran in the calling shell, so open() on a reader-less FIFO blocked BEFORE timeout started -- the exact freeze the guard exists to prevent; move the redirect inside the timeout'd bash so the inner timeout bounds it
+
+commit 29e12c7e5768d3e55ad975104abadfd2b4e4a819
+Author: claude (dev534 1e2c41f1-4191-46ad-8a1a-8ac04910f049) <noreply@anthropic.com>
+Date:   Sat Sep 12 05:17:25 2026 -0400
+
+    msgprogressbar: keep report-this-bug empty wording
+
+    - empty title/message keeps the user-visible 'Please report this bug' popup (operator decision); reverts the identifier-fallback / empty-message change
+
+commit 7b2c1dc6b971b98fe892e61820e00c9098d49d43
+Author: claude (dev534 1e2c41f1-4191-46ad-8a1a-8ac04910f049) <noreply@anthropic.com>
+Date:   Sat Sep 12 05:05:33 2026 -0400
+
+    re-add empty-title fallback + passive type-icon fn
+
+    - msgprogressbar: empty progressbartitlex falls back to the identifier instead of an alarming 'report this bug' popup; an empty message renders as-is
+
+    - msgdispatcher: extract msgdispatcher_passive_type_icon() (unit-testable) and call it from dispatch_x_passive; behavior unchanged
+
+    - both were dropped when the tree was reset to arraybolt3/trixie; the dist-ai integration suite requires them
+
+commit 7ff66dc59169cfb89c916ffd730781b1dec0b056
+Author: claude (dev534 1e2c41f1-4191-46ad-8a1a-8ac04910f049) <noreply@anthropic.com>
+Date:   Sat Sep 12 04:56:35 2026 -0400
+
+    restore MSGCOLLECTOR_REPO overridable base
+
+    - dist-ai resolves scripts-under-test via ${MSGCOLLECTOR_REPO:-} (44 refs, the package convention); MSGCOLLECTOR_PATH bypassed the test override, so dispatch_x_stdin_test launched the real PyQt dialog and hung on app.exec_(). No production caller sets either var (both default to /usr/libexec)
+
+    - extend LC_ALL=C (R-010) to msgprogress and msgprogressbar_kill_helper
+
+    - .shellcheckrc: disable SC2034 for cross-file command-name indirection (error_handler runs $output_x/$output_cli); drop the now-redundant inline disable
+
+commit cfafe8d1bf8c294ede4767f4b3818c51d390127b
+Author: claude (dev534 1e2c41f1-4191-46ad-8a1a-8ac04910f049) <noreply@anthropic.com>
+Date:   Sat Sep 12 04:23:12 2026 -0400
+
+    dialogs: no-display guard, defect fixes, sanitize
+
+    - guard PyQt entry points with exit_if_no_gui() before QApplication so a headless invocation exits cleanly instead of SIGABRT (134), which a caller under set -e misreads as a script bug
+
+    - import the renamed guimessages.check_display module (was guimessages.display)
+
+    - one-time-popup: '--' terminator before notify-send positionals (option injection); lazy guard import so the --passive path stays display-independent
+
+    - tb_updater_gui: single event loop (fixes OK-button hang after accept); sanitize_string version strings, stripping control/ANSI bytes not just markup
+
+commit 04b60df169ce03ee758e3d49d63573edb1b3e1ae
+Author: claude (dev534 1e2c41f1-4191-46ad-8a1a-8ac04910f049) <noreply@anthropic.com>
+Date:   Sat Sep 12 04:17:57 2026 -0400
+
+    msgcollector: LC_ALL=C, force-color fix, has.bsh
+
+    - add export LC_ALL=C strict directive (R-010) to the msgcollector was_executed block, msgdispatcher and msgprogressbar
+
+    - fix broken force-color: ASSUME_TERM_PRESENT -> COLOR_FORCE_YES, the knob get_colors.sh actually reads
+
+    - migrate helper-scripts has.sh sourcing to has.bsh
+
+    - drop dead 'cli' flag and unused 'local pid'; add per-repo .shellcheckrc for cross-source SC2154/SC1090/SC1091 false positives
+
+commit b8044e3c59116e80e3b93d58f5ebf781f28a4b0c
+Author: claude (dev534 1e2c41f1-4191-46ad-8a1a-8ac04910f049) <noreply@anthropic.com>
+Date:   Sat Sep 12 04:08:22 2026 -0400
+
+    reset msgcollector tree to arraybolt3/trixie polish
+
+    - discard the ai-side merge reversion of 23a1090; our own improvements are re-added clean-room on top in following commits
+
+commit b9e797821b03dd533203aa238f7649d4e6f90bd9
+Merge: aab1fd6 2c55923
+Author: claude (dev490 427cd1a1-bb80-4a36-9e14-2b6cec600780) <noreply@anthropic.com>
+Date:   Tue Sep 8 23:35:42 2026 -0400
+
+    Merge branch 'master' into ai
+
+    # Conflicts:
+    #       usr/libexec/msgcollector/msgcollector
+    #       usr/libexec/msgcollector/msgdispatcher
+    #       usr/libexec/msgcollector/msgprogressbar
+
+commit 2c559232fa752412c71c6b4d489be04db099b59c
+Merge: 77ae332 03c0a85
+Author: claude (dev490 427cd1a1-bb80-4a36-9e14-2b6cec600780) <noreply@anthropic.com>
+Date:   Tue Sep 8 23:32:15 2026 -0400
+
+    Merge remote-tracking branch 'up/master'
+
+commit aab1fd6c333b6f75a20625e47c5ac41bcfc9a476
+Author: claude (dev474 c7439536-fad8-4884-b71a-d2f3c4c23905) <noreply@anthropic.com>
+Date:   Mon Sep 7 11:47:26 2026 -0400
+
+    rename has.sh to has.bsh (bashism convention)
+
+    Sourced helper-scripts lib uses bashisms; .bsh marks it. Path-only edit.
+
+commit b83e57997f8a9ee0448c86ee8082391ee3991dd8
+Author: claude (dev467 5e3d4808-e430-4989-bff4-acc975c61b26) <noreply@anthropic.com>
+Date:   Mon Sep 7 07:18:53 2026 -0400
+
+    msgcollector: LC_ALL=C strict directive; shellcheck cleanup
+
+    - export LC_ALL=C (R-010; byte-oriented, matching the ARG_MAX chunking design)
+    - add per-repo .shellcheckrc (sourced get_colors vars trip SC2154/SC1091 in
+      isolated staged checks), mirroring the project policy
+    - drop dead 'cli' flag and unused 'local pid'
+    - suite green: integration 66/0, unit 44/0
+
+commit dcee40aa37168725a1cbbbd83812a50c1d7fd8b7
+Author: claude (dev467 5e3d4808-e430-4989-bff4-acc975c61b26) <noreply@anthropic.com>
+Date:   Mon Sep 7 04:27:56 2026 -0400
+
+    Rename ASSUME_TERM_PRESENT to COLOR_FORCE_YES
+
+    - matches the renamed get_colors.sh force-color knob
+
+commit 03c0a853f9f1c02796d1568d02a61478af048a3a
+Author: Patrick Schleizer <adrelanos@whonix.org>
+Date:   Sun Sep 6 16:44:54 2026 +0000
+
+    bumped changelog version
+
+commit 3ece3759dd3af7707c2e762d0bffb00d57da92ab
+Author: claude (dev421 573bc9ba-3b4d-4993-94ef-3b572f5b8604) <noreply@anthropic.com>
+Date:   Fri Sep 4 08:09:00 2026 -0400
+
+    tb_updater_gui: sanitize version strings, not just html.escape
+
+    - html.escape neutralizes markup only; sanitize_string also strips control
+      and ANSI/escape bytes that can spoof the version in the confirmation dialog
+    - matches the display-safe sanitizer open-link-confirmation uses
+
+commit 5f01b8920896593b37a5a6704e57de8328a5fc7d
+Author: claude (dev421 573bc9ba-3b4d-4993-94ef-3b572f5b8604) <noreply@anthropic.com>
+Date:   Fri Sep 4 05:13:37 2026 -0400
+
+    Fix pre-existing dialog defects found in review
+
+    - tb_updater_gui: single event loop (show + app.exec_) so the OK button no
+      longer hangs after accept() returns from the nested exec_
+    - tb_updater_gui: html.escape the caller-supplied version strings, which
+      render as rich text and could spoof the confirmation dialog
+    - one-time-popup: '--' before the notify-send positionals (option injection)
+    - one-time-popup: import the GUI guard lazily so the passive notify-send
+      path no longer depends on it
+
+commit c7d8a8f90bdb84f7f2ff23351a91487d8502a71d
+Author: claude (dev421 573bc9ba-3b4d-4993-94ef-3b572f5b8604) <noreply@anthropic.com>
+Date:   Fri Sep 4 03:48:36 2026 -0400
+
+    Guard PyQt dialog entry points against no-display SIGABRT
+
+    - generic_gui_message, tb_updater_gui, one-time-popup and
+      msgdispatcher_dispatch_x call guimessages.display.exit_if_no_gui before
+      QApplication, so a headless invocation declines cleanly instead of
+      aborting 134 (which a caller under set -e reads as a script bug).
+
 commit 3cc6d53647b7bfde389ee63fdd38cb21932b2e63
 Merge: 77ae332 23a1090
 Author: Patrick Schleizer <adrelanos@whonix.org>

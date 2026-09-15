@@ -40,6 +40,8 @@ from types import FrameType
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 
+from guimessages.check_display import exit_if_no_gui
+
 
 class PopupWindow(QtWidgets.QDialog):
     """
@@ -137,8 +139,6 @@ def show_passive_popup(status_path: Path, title: str, message: str) -> None:
                 "/usr/bin/notify-send",
                 "--action=SUPPRESS=Don't show again",
                 "--app-name=one-time-popup",
-                ## End of options: a title/message beginning with '-' must not be
-                ## parsed as a notify-send option.
                 "--",
                 title,
                 message,
@@ -231,10 +231,6 @@ def main() -> NoReturn:
     if args.passive:
         show_passive_popup(status_path, args.title, args.message)
     else:
-        ## Headless (no display): decline cleanly instead of letting QApplication
-        ## abort with SIGABRT. Imported here, not at module top, so the passive
-        ## (notify-send) path does not depend on the GUI display helper.
-        from guimessages.check_display import exit_if_no_gui
         exit_if_no_gui()
 
         app: QtWidgets.QApplication = QtWidgets.QApplication(sys.argv)

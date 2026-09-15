@@ -160,10 +160,6 @@ def main():
     if not os.path.exists(args.itype):
         print(f"INFO: The icon path '{args.itype}' does not exist.", file=sys.stderr)
 
-    ## Headless (no display): decline cleanly instead of letting QApplication
-    ## abort with SIGABRT (exit 134), which a caller under set -e misreads as a
-    ## script bug. Placed after the stdin drain so the caller's write is fully
-    ## consumed first (no SIGPIPE). Shared guard, see guimessages.check_display.
     exit_if_no_gui()
 
     app = QtWidgets.QApplication(sys.argv)
